@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChatGPT</title>
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #000; /* black background */
+    position: relative;
+    overflow: hidden;
+}
+
+/* Subtle anime background images */
+body::before, body::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 300px;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    opacity: 0.08; /* very subtle */
+    z-index: 0;
+    filter: blur(3px);
+}
+body::before { left: 0; background-image: url('https://i.imgur.com/2f2Xj4F.png'); }
+body::after { right: 0; background-image: url('https://i.imgur.com/qb7ZK7P.png'); }
+
+/* Chat container */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    width: 95%;
+    max-width: 500px;
+    height: 90%;
+    margin: auto;
+    background: #111; /* dark interior */
+    border-radius: 15px;
+    box-shadow: 0 0 15px rgba(255,255,255,0.1);
+    z-index: 1;
+    color: #fff;
+    overflow: hidden;
+}
+
+/* Header */
+.chat-header {
+    background: #111;
+    color: #fff;
+    font-weight: bold;
+    text-align: center;
+    padding: 18px;
+    font-size: 20px;
+    letter-spacing: 0.5px;
+    position: relative;
+    border-bottom: 1px solid #333;
+}
+#themeToggle {
+    position: absolute;
+    right: 15px;
+    top: 10px;
+    padding: 4px 8px;
+    font-size: 14px;
+    cursor: pointer;
+    border: none;
+    border-radius: 6px;
+    background: #fff;
+    color: #000;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+#themeToggle:hover { background: #ccc; }
+
+/* Messages */
+.chat-messages {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    background: #111;
+    color: #fff;
+    scroll-behavior: smooth;
+}
+
+/* Quick replies */
+.quick-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 10px;
+    gap: 8px;
+    background: #111;
+}
+.quick-buttons button {
+    background: #fff;
+    color: #000;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+.quick-buttons button:hover { background: #ccc; color: #000; }
+
+/* Chat input */
+.chat-input {
+    display: flex;
+    border-top: 1px solid #333;
+    background: #111;
+}
+.chat-input input {
+    flex: 1;
+    padding: 12px 15px;
+    border: none;
+    outline: none;
+    font-size: 15px;
+    background: transparent;
+    color: #fff;
+}
+.chat-input button {
+    padding: 12px 20px;
+    border: none;
+    background: #fff;
+    color: #000;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.chat-input button:hover { background: #ccc; }
+
+/* Messages styling */
+.message { display: flex; margin-bottom: 12px; opacity: 0; animation: fadeIn 0.3s forwards; }
+@keyframes fadeIn { to { opacity: 1; } }
+.message.user { justify-content: flex-end; }
+.message.ai { justify-content: flex-start; }
+
+.bubble {
+    padding: 12px 18px;
+    max-width: 70%;
+    border-radius: 20px;
+    line-height: 1.4;
+    font-size: 15px;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    transition: all 0.3s;
+}
+.message.user .bubble { background: #fff; color: #000; border-radius: 20px 20px 0 20px; }
+.message.ai .bubble { background: #222; color: #fff; border-radius: 20px 20px 20px 0; }
+
+/* Typing dots */
+.typing-dots span { display: inline-block; width: 6px; height: 6px; margin: 0 2px; background: #fff; border-radius: 50%; animation: blink 1.4s infinite both; }
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 0%,80%,100% {opacity:0;} 40% {opacity:1;} }
+
+/* Donations */
+.donation-section { padding: 15px; text-align: center; background: #111; }
+.donation-section h3 { margin-bottom: 10px; font-size: 16px; color: #fff; }
+.donation-buttons button {
+    background: #fff;
+    color: #000;
+    border: none;
+    padding: 8px 15px;
+    margin: 5px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+.donation-buttons button:hover { background: #ccc; color: #000; }
+
+</style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">
+      ChatGPT
+    </div>
+
+    <div class="chat-messages" id="chatMessages"></div>
+
+    <div class="quick-buttons">
+        <button onclick="sendQuick('Hello!')">Hello</button>
+        <button onclick="sendQuick('Who is Virat Kohli?')">Who is Virat Kohli?</button>
+        <button onclick="sendQuick('Tell me a joke')">Tell me a joke</button>
+        <button onclick="sendQuick('How are you?')">How are you?</button>
+    </div>
+
+    <div class="chat-input">
+        <input type="text" id="userInput" placeholder="Type a message..." />
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+
+    </div>
+</div>
+
+<script>
+let messageCount = 0;
+
+async function sendMessage() {
+    const input = document.getElementById('userInput');
+    const message = input.value.trim();
+    if (!message) return;
+
+    addMessage('user', message);
+    input.value = '';
+
+    const typingId = addMessage('ai', createTypingDots());
+
+    const response = await fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message })
+    });
+    const data = await response.json();
+
+    updateMessage(typingId, data.reply);
+
+    if ('speechSynthesis' in window) {
+        const cleanText = data.reply.replace(/[*_~`#>]/g, '');
+        const utter = new SpeechSynthesisUtterance(cleanText);
+        utter.lang = 'en-US';
+        speechSynthesis.speak(utter);
+    }
+}
+
+function sendQuick(text) {
+    document.getElementById('userInput').value = text;
+    sendMessage();
+}
+
+function addMessage(sender, content) {
+    const chat = document.getElementById('chatMessages');
+    const msgDiv = document.createElement('div');
+    msgDiv.classList.add('message', sender);
+    const bubble = document.createElement('div');
+    bubble.classList.add('bubble');
+    bubble.innerHTML = content;
+    msgDiv.appendChild(bubble);
+    chat.appendChild(msgDiv);
+    chat.scrollTop = chat.scrollHeight;
+    const id = `msg-${messageCount++}`;
+    msgDiv.id = id;
+    return id;
+}
+
+function updateMessage(id, text) {
+    const msgDiv = document.getElementById(id);
+    if (msgDiv) msgDiv.querySelector('.bubble').textContent = text;
+    const chat = document.getElementById('chatMessages');
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function createTypingDots() {
+    return `<span class="typing-dots"><span></span><span></span><span></span></span>`;
+}
+
+document.getElementById('userInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        sendMessage();
+        e.preventDefault();
+    }
+});
+</script>
+
+</body>
+</html>
